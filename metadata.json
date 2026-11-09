@@ -1,0 +1,6 @@
+{
+  "name": "Code With K — LinkedIn Carousel Studio",
+  "description": "High-authority editorial LinkedIn Carousel Designer for tech blogs, ML, SQL, and Power BI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

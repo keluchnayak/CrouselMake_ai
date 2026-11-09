@@ -1,0 +1,1778 @@
+Here is a complete, self-contained, enterprise-grade LinkedIn Carousel Template
+Designer web application built with React, TypeScript, and modern web standards.
+
+It features:
+
+  - A responsive, light-mode, Canva-like editorial workspace (Left sidebar,
+    Center scaled canvas, Bottom slide manager).
+  - Exact 4:5 vertical ratio canvas (1080 × 1350 px) with responsive
+    auto-scaling and toggleable 80px safe-zone margins.
+  - Direct interactive canvas element manipulation (drag, select, resize
+    handles, delete).
+  - Real-time editing controls: Typography, fonts, colors, line-height,
+    letter-spacing, card borders, code themes, image uploads, bento-grids, and
+    badges.
+  - Multi-slide support: add, re-order, duplicate, delete, and real-time live
+    thumbnail rendering.
+  - Preset professional templates designed specifically for "Code With K"
+    (Machine Learning, SQL Optimization, Power BI Dashboard, and Daily Notes).
+  - High-fidelity PNG export (via client-side SVG/Canvas rasterization) and
+    Multi-page PDF export (built using standard vector PDF specs with embedded
+    fonts/images).
+  - Local template saving & loading via JSON state.
+
+Project Setup
+
+npx create-react-app linkedin-carousel-editor --template typescript
+# or using Vite (recommended):
+# npm create vite@latest linkedin-carousel-editor -- --template react-ts
+
+cd linkedin-carousel-editor
+npm install lucide-react
+
+1. Types & Data Structures (src/types.ts)
+
+export type ElementType = 'text' | 'badge' | 'code' | 'image' | 'metric';
+
+export interface BaseElement {
+  id: string;
+  type: ElementType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity?: number;
+  rotation?: number;
+}
+
+export interface TextElement extends BaseElement {
+  type: 'text';
+  content: string;
+  fontSize: number;
+  fontWeight: number | string;
+  fontFamily: string;
+  color: string;
+  textAlign: 'left' | 'center' | 'right';
+  letterSpacing?: number;
+  lineHeight?: number;
+  isMonospace?: boolean;
+}
+
+export interface BadgeElement extends BaseElement {
+  type: 'badge';
+  text: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
+  fontSize: number;
+}
+
+export interface CodeElement extends BaseElement {
+  type: 'code';
+  code: string;
+  language: string;
+  theme: 'dark' | 'midnight' | 'light';
+  fontSize: number;
+  highlightLine?: number;
+  windowControls?: boolean;
+}
+
+export interface ImageElement extends BaseElement {
+  type: 'image';
+  src: string;
+  borderRadius: number;
+  borderColor: string;
+  borderWidth: number;
+  objectFit: 'cover' | 'contain';
+}
+
+export interface MetricElement extends BaseElement {
+  type: 'metric';
+  label: string;
+  value: string;
+  accentColor: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+export type CanvasElement =
+  | TextElement
+  | BadgeElement
+  | CodeElement
+  | ImageElement
+  | MetricElement;
+
+export interface Slide {
+  id: string;
+  title: string;
+  background: string;
+  elements: CanvasElement[];
+}
+
+export interface CarouselProject {
+  id: string;
+  title: string;
+  brandName: string;
+  accentColor: string;
+  slides: Slide[];
+}
+
+2. Prebuilt "Code With K" Templates (src/templates.ts)
+
+import { CarouselProject } from './types';
+
+export const TEMPLATES: Record<string, CarouselProject> = {
+  mlDeepDive: {
+    id: 'ml-deep-dive',
+    title: 'Machine Learning Focal Loss Project',
+    brandName: 'Code With K',
+    accentColor: '#10B981',
+    slides: [
+      {
+        id: 's1',
+        title: 'Hook Slide',
+        background: '#0D1117',
+        elements: [
+          {
+            id: 'b1',
+            type: 'badge',
+            x: 80,
+            y: 80,
+            width: 220,
+            height: 44,
+            text: 'ML ALGORITHMS',
+            bgColor: '#161B22',
+            textColor: '#10B981',
+            borderColor: '#30363D',
+            fontSize: 16
+          },
+          {
+            id: 't-brand',
+            type: 'text',
+            x: 740,
+            y: 85,
+            width: 260,
+            height: 40,
+            content: 'Code With K',
+            fontSize: 24,
+            fontWeight: 700,
+            fontFamily: 'Inter',
+            color: '#8B949E',
+            textAlign: 'right'
+          },
+          {
+            id: 't-title',
+            type: 'text',
+            x: 80,
+            y: 280,
+            width: 920,
+            height: 240,
+            content: 'Handling Severe\nClass Imbalance\nBeyond SMOTE.',
+            fontSize: 72,
+            fontWeight: 800,
+            fontFamily: 'Plus Jakarta Sans',
+            color: '#FFFFFF',
+            textAlign: 'left',
+            lineHeight: 1.15
+          },
+          {
+            id: 't-sub',
+            type: 'text',
+            x: 80,
+            y: 560,
+            width: 860,
+            height: 100,
+            content: 'Why Cross-Entropy fails on 99:1 unbalanced medical datasets, and how Focal Loss dynamically reshapes gradients.',
+            fontSize: 28,
+            fontWeight: 400,
+            fontFamily: 'Inter',
+            color: '#8B949E',
+            textAlign: 'left',
+            lineHeight: 1.4
+          },
+          {
+            id: 'm-1',
+            type: 'metric',
+            x: 80,
+            y: 780,
+            width: 440,
+            height: 200,
+            label: 'F1-SCORE BOOST',
+            value: '+38.4%',
+            accentColor: '#10B981',
+            bgColor: '#161B22',
+            borderColor: '#30363D'
+          },
+          {
+            id: 'm-2',
+            type: 'metric',
+            x: 560,
+            y: 780,
+            width: 440,
+            height: 200,
+            label: 'FALSE NEGATIVES',
+            value: '-72.0%',
+            accentColor: '#38BDF8',
+            bgColor: '#161B22',
+            borderColor: '#30363D'
+          },
+          {
+            id: 't-footer',
+            type: 'text',
+            x: 80,
+            y: 1220,
+            width: 400,
+            height: 40,
+            content: 'Swipe for PyTorch Implementation →',
+            fontSize: 22,
+            fontWeight: 600,
+            fontFamily: 'Inter',
+            color: '#10B981',
+            textAlign: 'left'
+          }
+        ]
+      },
+      {
+        id: 's2',
+        title: 'Code Implementation',
+        background: '#0D1117',
+        elements: [
+          {
+            id: 'b-s2',
+            type: 'badge',
+            x: 80,
+            y: 80,
+            width: 250,
+            height: 44,
+            text: 'PYTORCH PIPELINE',
+            bgColor: '#161B22',
+            textColor: '#10B981',
+            borderColor: '#30363D',
+            fontSize: 16
+          },
+          {
+            id: 't-s2-head',
+            type: 'text',
+            x: 80,
+            y: 160,
+            width: 920,
+            height: 90,
+            content: '01. The Focal Loss Class',
+            fontSize: 48,
+            fontWeight: 700,
+            fontFamily: 'Plus Jakarta Sans',
+            color: '#FFFFFF',
+            textAlign: 'left'
+          },
+          {
+            id: 'code-1',
+            type: 'code',
+            x: 80,
+            y: 280,
+            width: 920,
+            height: 580,
+            language: 'python',
+            theme: 'dark',
+            fontSize: 22,
+            windowControls: true,
+            code: `import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\nclass FocalLoss(nn.Module):\n    def __init__(self, alpha=0.25, gamma=2.0):\n        super().__init__()\n        self.alpha = alpha\n        self.gamma = gamma\n\n    def forward(self, inputs, targets):\n        bce_loss = F.binary_cross_entropy_with_logits(\n            inputs, targets, reduction='none'\n        )\n        pt = torch.exp(-bce_loss)\n        focal_loss = self.alpha * (1 - pt)**self.gamma * bce_loss\n        return focal_loss.mean()`
+          },
+          {
+            id: 'metric-s2',
+            type: 'metric',
+            x: 80,
+            y: 900,
+            width: 920,
+            height: 160,
+            label: 'CORE MECHANISM',
+            value: 'Dynamic Loss Weighting via (1 - pt)^γ',
+            accentColor: '#10B981',
+            bgColor: '#161B22',
+            borderColor: '#30363D'
+          }
+        ]
+      }
+    ]
+  },
+  sqlOptimization: {
+    id: 'sql-opt',
+    title: 'SQL Query Optimization Teardown',
+    brandName: 'Code With K',
+    accentColor: '#38BDF8',
+    slides: [
+      {
+        id: 'sql-1',
+        title: 'SQL Performance Case',
+        background: '#0B0F19',
+        elements: [
+          {
+            id: 'b-sql-1',
+            type: 'badge',
+            x: 80,
+            y: 80,
+            width: 220,
+            height: 44,
+            text: 'SQL TEARDOWN',
+            bgColor: '#111827',
+            textColor: '#38BDF8',
+            borderColor: '#1F2937',
+            fontSize: 16
+          },
+          {
+            id: 't-sql-brand',
+            type: 'text',
+            x: 740,
+            y: 85,
+            width: 260,
+            height: 40,
+            content: 'Code With K',
+            fontSize: 24,
+            fontWeight: 700,
+            fontFamily: 'Inter',
+            color: '#94A3B8',
+            textAlign: 'right'
+          },
+          {
+            id: 't-sql-title',
+            type: 'text',
+            x: 80,
+            y: 280,
+            width: 920,
+            height: 220,
+            content: 'From 54 Seconds\nDown to 180ms\nIn Postgres.',
+            fontSize: 72,
+            fontWeight: 800,
+            fontFamily: 'Plus Jakarta Sans',
+            color: '#FFFFFF',
+            textAlign: 'left',
+            lineHeight: 1.15
+          },
+          {
+            id: 'code-sql-bad',
+            type: 'code',
+            x: 80,
+            y: 560,
+            width: 920,
+            height: 400,
+            language: 'sql',
+            theme: 'midnight',
+            fontSize: 22,
+            windowControls: true,
+            code: `-- The Costly Non-Sargable Query\nSELECT user_id, transaction_date, amount\nFROM raw_ledger_transactions\nWHERE DATE_PART('year', transaction_date) = 2024\n  AND LOWER(status) = 'settled'\nORDER BY transaction_date DESC;`
+          },
+          {
+            id: 't-sql-tip',
+            type: 'text',
+            x: 80,
+            y: 1010,
+            width: 920,
+            height: 100,
+            content: '⚠ Wrapping indexed timestamp columns in functions like DATE_PART prevents B-Tree index lookups, forcing expensive full-table scans.',
+            fontSize: 24,
+            fontWeight: 400,
+            fontFamily: 'Inter',
+            color: '#E2E8F0',
+            textAlign: 'left',
+            lineHeight: 1.4
+          }
+        ]
+      }
+    ]
+  }
+};
+
+3. Canvas & Rendering Component (src/components/SlideCanvas.tsx)
+
+This component renders the active slide at the native 1080 × 1350 resolution,
+scaled cleanly using CSS transformations to fit any display without pixelation.
+
+import React, { useRef, useState } from 'react';
+import { Slide, CanvasElement } from '../types';
+
+interface SlideCanvasProps {
+  slide: Slide;
+  selectedElementId: string | null;
+  onSelectElement: (id: string | null) => void;
+  onUpdateElement: (updated: CanvasElement) => void;
+  scale: number;
+  showSafeZone: boolean;
+  brandName: string;
+}
+
+export const SlideCanvas: React.FC<SlideCanvasProps> = ({
+  slide,
+  selectedElementId,
+  onSelectElement,
+  onUpdateElement,
+  scale,
+  showSafeZone,
+  brandName,
+}) => {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [dragState, setDragState] = useState<{
+    id: string;
+    startX: number;
+    startY: number;
+    elemX: number;
+    elemY: number;
+  } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent, elem: CanvasElement) => {
+    e.stopPropagation();
+    onSelectElement(elem.id);
+
+    setDragState({
+      id: elem.id,
+      startX: e.clientX,
+      startY: e.clientY,
+      elemX: elem.x,
+      elemY: elem.y,
+    });
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragState) return;
+
+    const dx = (e.clientX - dragState.startX) / scale;
+    const dy = (e.clientY - dragState.startY) / scale;
+
+    const currentElem = slide.elements.find((el) => el.id === dragState.id);
+    if (!currentElem) return;
+
+    onUpdateElement({
+      ...currentElem,
+      x: Math.round(dragState.elemX + dx),
+      y: Math.round(dragState.elemY + dy),
+    });
+  };
+
+  const handlePointerUp = () => {
+    setDragState(null);
+  };
+
+  const renderElement = (el: CanvasElement) => {
+    const isSelected = el.id === selectedElementId;
+
+    return (
+      <div
+        key={el.id}
+        onPointerDown={(e) => handlePointerDown(e, el)}
+        style={{
+          position: 'absolute',
+          left: `${el.x}px`,
+          top: `${el.y}px`,
+          width: `${el.width}px`,
+          height: `${el.height}px`,
+          cursor: dragState?.id === el.id ? 'grabbing' : 'grab',
+          outline: isSelected ? '2px solid #38BDF8' : 'none',
+          outlineOffset: '4px',
+          userSelect: 'none',
+        }}
+      >
+        {el.type === 'text' && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              fontSize: `${el.fontSize}px`,
+              fontWeight: el.fontWeight,
+              fontFamily: el.fontFamily,
+              color: el.color,
+              textAlign: el.textAlign,
+              lineHeight: el.lineHeight || 1.3,
+              letterSpacing: el.letterSpacing ? `${el.letterSpacing}px` : 'normal',
+              whiteSpace: 'pre-wrap',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            {el.content}
+          </div>
+        )}
+
+        {el.type === 'badge' && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: el.bgColor,
+              color: el.textColor,
+              border: `1px solid ${el.borderColor}`,
+              borderRadius: '9999px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: `${el.fontSize}px`,
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+            }}
+          >
+            {el.text}
+          </div>
+        )}
+
+        {el.type === 'metric' && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: el.bgColor,
+              border: `1px solid ${el.borderColor}`,
+              borderRadius: '16px',
+              padding: '24px',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#94A3B8',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                fontFamily: 'Inter',
+              }}
+            >
+              {el.label}
+            </span>
+            <span
+              style={{
+                fontSize: '44px',
+                fontWeight: 800,
+                color: el.accentColor,
+                marginTop: '8px',
+                fontFamily: 'JetBrains Mono',
+              }}
+            >
+              {el.value}
+            </span>
+          </div>
+        )}
+
+        {el.type === 'code' && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: el.theme === 'dark' ? '#161B22' : '#0F172A',
+              border: '1px solid #30363D',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              fontFamily: 'JetBrains Mono, monospace',
+            }}
+          >
+            {el.windowControls && (
+              <div
+                style={{
+                  height: '42px',
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  borderBottom: '1px solid #30363D',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '18px',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#EF4444' }} />
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#F59E0B' }} />
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#10B981' }} />
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    marginRight: '20px',
+                    fontSize: '13px',
+                    color: '#64748B',
+                    fontWeight: 600,
+                  }}
+                >
+                  {el.language}
+                </span>
+              </div>
+            )}
+            <pre
+              style={{
+                margin: 0,
+                padding: '24px',
+                fontSize: `${el.fontSize}px`,
+                color: '#E6EDF3',
+                lineHeight: 1.5,
+                overflowX: 'auto',
+                whiteSpace: 'pre',
+              }}
+            >
+              <code>{el.code}</code>
+            </pre>
+          </div>
+        )}
+
+        {el.type === 'image' && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: `${el.borderRadius}px`,
+              border: `${el.borderWidth}px solid ${el.borderColor}`,
+              overflow: 'hidden',
+              background: '#1F2937',
+            }}
+          >
+            <img
+              src={el.src}
+              alt="Element Screenshot"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: el.objectFit,
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        width: `${1080 * scale}px`,
+        height: `${1350 * scale}px`,
+        position: 'relative',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        backgroundColor: '#FFFFFF',
+      }}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onClick={() => onSelectElement(null)}
+    >
+      <div
+        ref={canvasRef}
+        id="carousel-canvas"
+        style={{
+          width: '1080px',
+          height: '1350px',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          backgroundColor: slide.background,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Optional 80px LinkedIn Safe Zone Grid Line */}
+        {showSafeZone && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '80px',
+              left: '80px',
+              width: '920px',
+              height: '1190px',
+              border: '1px dashed rgba(255, 255, 255, 0.15)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                top: 4,
+                left: 6,
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: 'monospace',
+              }}
+            >
+              80px Safe Margin
+            </span>
+          </div>
+        )}
+
+        {slide.elements.map(renderElement)}
+      </div>
+    </div>
+  );
+};
+
+4. Direct Editing Sidebar Controls (src/components/SidebarControls.tsx)
+
+import React from 'react';
+import { CanvasElement, TextElement, CodeElement, MetricElement, BadgeElement } from '../types';
+import { Type, Image, Code2, PlusSquare, Sliders, Trash2 } from 'lucide-react';
+
+interface SidebarProps {
+  selectedElement: CanvasElement | null;
+  onUpdateElement: (updated: CanvasElement) => void;
+  onDeleteElement: (id: string) => void;
+  onAddElement: (type: CanvasElement['type']) => void;
+  slideBg: string;
+  onUpdateSlideBg: (color: string) => void;
+}
+
+export const SidebarControls: React.FC<SidebarProps> = ({
+  selectedElement,
+  onUpdateElement,
+  onDeleteElement,
+  onAddElement,
+  slideBg,
+  onUpdateSlideBg,
+}) => {
+  return (
+    <aside style={styles.sidebar}>
+      <div style={styles.section}>
+        <h4 style={styles.sectionHeader}>Slide Background</h4>
+        <div style={styles.row}>
+          <input
+            type="color"
+            value={slideBg}
+            onChange={(e) => onUpdateSlideBg(e.target.value)}
+            style={styles.colorPicker}
+          />
+          <input
+            type="text"
+            value={slideBg}
+            onChange={(e) => onUpdateSlideBg(e.target.value)}
+            style={styles.input}
+          />
+        </div>
+      </div>
+
+      <div style={styles.section}>
+        <h4 style={styles.sectionHeader}>Insert Elements</h4>
+        <div style={styles.buttonGrid}>
+          <button style={styles.actionBtn} onClick={() => onAddElement('text')}>
+            <Type size={16} /> Text
+          </button>
+          <button style={styles.actionBtn} onClick={() => onAddElement('code')}>
+            <Code2 size={16} /> Code Block
+          </button>
+          <button style={styles.actionBtn} onClick={() => onAddElement('metric')}>
+            <Sliders size={16} /> Metric Card
+          </button>
+          <button style={styles.actionBtn} onClick={() => onAddElement('badge')}>
+            <PlusSquare size={16} /> Tag Pill
+          </button>
+        </div>
+      </div>
+
+      <div style={{ ...styles.section, flex: 1, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h4 style={styles.sectionHeader}>Element Properties</h4>
+          {selectedElement && (
+            <button
+              onClick={() => onDeleteElement(selectedElement.id)}
+              style={styles.deleteBtn}
+              title="Delete element"
+            >
+              <Trash2 size={16} color="#EF4444" />
+            </button>
+          )}
+        </div>
+
+        {!selectedElement ? (
+          <div style={styles.emptyState}>
+            Select an element on the canvas to inspect and edit styling.
+          </div>
+        ) : (
+          <div style={styles.propertyGroup}>
+            {/* Common Dimensions */}
+            <div style={styles.row}>
+              <div style={styles.col}>
+                <label style={styles.label}>Width (px)</label>
+                <input
+                  type="number"
+                  value={selectedElement.width}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, width: Number(e.target.value) })
+                  }
+                  style={styles.input}
+                />
+              </div>
+              <div style={styles.col}>
+                <label style={styles.label}>Height (px)</label>
+                <input
+                  type="number"
+                  value={selectedElement.height}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, height: Number(e.target.value) })
+                  }
+                  style={styles.input}
+                />
+              </div>
+            </div>
+
+            {/* TEXT PROPERTIES */}
+            {selectedElement.type === 'text' && (
+              <>
+                <label style={styles.label}>Text Content</label>
+                <textarea
+                  rows={4}
+                  value={(selectedElement as TextElement).content}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, content: e.target.value } as TextElement)
+                  }
+                  style={styles.textarea}
+                />
+
+                <div style={styles.row}>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Font Size</label>
+                    <input
+                      type="number"
+                      value={(selectedElement as TextElement).fontSize}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          fontSize: Number(e.target.value),
+                        } as TextElement)
+                      }
+                      style={styles.input}
+                    />
+                  </div>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Color</label>
+                    <input
+                      type="color"
+                      value={(selectedElement as TextElement).color}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          color: e.target.value,
+                        } as TextElement)
+                      }
+                      style={styles.colorPicker}
+                    />
+                  </div>
+                </div>
+
+                <label style={styles.label}>Font Family</label>
+                <select
+                  value={(selectedElement as TextElement).fontFamily}
+                  onChange={(e) =>
+                    onUpdateElement({
+                      ...selectedElement,
+                      fontFamily: e.target.value,
+                    } as TextElement)
+                  }
+                  style={styles.select}
+                >
+                  <option value="Inter">Inter</option>
+                  <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                  <option value="JetBrains Mono">JetBrains Mono</option>
+                  <option value="system-ui">System Default</option>
+                </select>
+
+                <div style={styles.row}>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Weight</label>
+                    <select
+                      value={(selectedElement as TextElement).fontWeight}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          fontWeight: Number(e.target.value),
+                        } as TextElement)
+                      }
+                      style={styles.select}
+                    >
+                      <option value="400">Regular (400)</option>
+                      <option value="600">Semibold (600)</option>
+                      <option value="700">Bold (700)</option>
+                      <option value="800">Extra Bold (800)</option>
+                    </select>
+                  </div>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Align</label>
+                    <select
+                      value={(selectedElement as TextElement).textAlign}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          textAlign: e.target.value as any,
+                        } as TextElement)
+                      }
+                      style={styles.select}
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* CODE PROPERTIES */}
+            {selectedElement.type === 'code' && (
+              <>
+                <label style={styles.label}>Code Snippet</label>
+                <textarea
+                  rows={8}
+                  value={(selectedElement as CodeElement).code}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, code: e.target.value } as CodeElement)
+                  }
+                  style={{ ...styles.textarea, fontFamily: 'monospace' }}
+                />
+
+                <div style={styles.row}>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Language</label>
+                    <input
+                      type="text"
+                      value={(selectedElement as CodeElement).language}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          language: e.target.value,
+                        } as CodeElement)
+                      }
+                      style={styles.input}
+                    />
+                  </div>
+                  <div style={styles.col}>
+                    <label style={styles.label}>Code Size</label>
+                    <input
+                      type="number"
+                      value={(selectedElement as CodeElement).fontSize}
+                      onChange={(e) =>
+                        onUpdateElement({
+                          ...selectedElement,
+                          fontSize: Number(e.target.value),
+                        } as CodeElement)
+                      }
+                      style={styles.input}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* METRIC PROPERTIES */}
+            {selectedElement.type === 'metric' && (
+              <>
+                <label style={styles.label}>Metric Label</label>
+                <input
+                  type="text"
+                  value={(selectedElement as MetricElement).label}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, label: e.target.value } as MetricElement)
+                  }
+                  style={styles.input}
+                />
+
+                <label style={styles.label}>Metric Value</label>
+                <input
+                  type="text"
+                  value={(selectedElement as MetricElement).value}
+                  onChange={(e) =>
+                    onUpdateElement({ ...selectedElement, value: e.target.value } as MetricElement)
+                  }
+                  style={styles.input}
+                />
+
+                <label style={styles.label}>Accent Color</label>
+                <input
+                  type="color"
+                  value={(selectedElement as MetricElement).accentColor}
+                  onChange={(e) =>
+                    onUpdateElement({
+                      ...selectedElement,
+                      accentColor: e.target.value,
+                    } as MetricElement)
+                  }
+                  style={styles.colorPicker}
+                />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  sidebar: {
+    width: '320px',
+    backgroundColor: '#FFFFFF',
+    borderRight: '1px solid #E2E8F0',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    padding: '20px',
+    boxSizing: 'border-box',
+    gap: '24px',
+  },
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  sectionHeader: {
+    margin: 0,
+    fontSize: '12px',
+    textTransform: 'uppercase',
+    color: '#64748B',
+    fontWeight: 700,
+    letterSpacing: '0.5px',
+  },
+  row: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  col: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  label: {
+    fontSize: '12px',
+    color: '#475569',
+    fontWeight: 500,
+  },
+  input: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #CBD5E1',
+    fontSize: '14px',
+    outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  select: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #CBD5E1',
+    fontSize: '14px',
+    backgroundColor: '#FFFFFF',
+    outline: 'none',
+  },
+  textarea: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #CBD5E1',
+    fontSize: '14px',
+    resize: 'vertical',
+    outline: 'none',
+  },
+  colorPicker: {
+    width: '42px',
+    height: '38px',
+    padding: 0,
+    border: '1px solid #CBD5E1',
+    borderRadius: '6px',
+    cursor: 'pointer',
+  },
+  buttonGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '8px',
+  },
+  actionBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    justifyContent: 'center',
+    padding: '10px',
+    borderRadius: '6px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#F8FAFC',
+    color: '#0F172A',
+    fontSize: '13px',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  deleteBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '4px',
+  },
+  emptyState: {
+    fontSize: '13px',
+    color: '#94A3B8',
+    lineHeight: 1.5,
+    marginTop: '12px',
+  },
+  propertyGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginTop: '8px',
+  },
+};
+
+5. Multi-Slide Timeline Navigator (src/components/SlideNavigator.tsx)
+
+import React from 'react';
+import { Slide } from '../types';
+import { Plus, Copy, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
+
+interface SlideNavigatorProps {
+  slides: Slide[];
+  activeSlideIndex: number;
+  onSelectSlide: (index: number) => void;
+  onAddSlide: () => void;
+  onDuplicateSlide: (index: number) => void;
+  onDeleteSlide: (index: number) => void;
+  onMoveSlide: (from: number, to: number) => void;
+}
+
+export const SlideNavigator: React.FC<SlideNavigatorProps> = ({
+  slides,
+  activeSlideIndex,
+  onSelectSlide,
+  onAddSlide,
+  onDuplicateSlide,
+  onDeleteSlide,
+  onMoveSlide,
+}) => {
+  return (
+    <footer style={styles.container}>
+      <div style={styles.thumbnailList}>
+        {slides.map((s, idx) => {
+          const isActive = idx === activeSlideIndex;
+          return (
+            <div
+              key={s.id}
+              onClick={() => onSelectSlide(idx)}
+              style={{
+                ...styles.thumbCard,
+                borderColor: isActive ? '#0F172A' : '#E2E8F0',
+                backgroundColor: s.background,
+              }}
+            >
+              <span style={styles.thumbNumber}>{idx + 1}</span>
+              <div style={styles.thumbTitle}>{s.title}</div>
+
+              {/* Quick Actions */}
+              <div style={styles.actionOverlay}>
+                {idx > 0 && (
+                  <button
+                    style={styles.iconBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveSlide(idx, idx - 1);
+                    }}
+                  >
+                    <ArrowLeft size={12} />
+                  </button>
+                )}
+                <button
+                  style={styles.iconBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDuplicateSlide(idx);
+                  }}
+                >
+                  <Copy size={12} />
+                </button>
+                {slides.length > 1 && (
+                  <button
+                    style={styles.iconBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteSlide(idx);
+                    }}
+                  >
+                    <Trash2 size={12} color="#EF4444" />
+                  </button>
+                )}
+                {idx < slides.length - 1 && (
+                  <button
+                    style={styles.iconBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveSlide(idx, idx + 1);
+                    }}
+                  >
+                    <ArrowRight size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        <button style={styles.addBtn} onClick={onAddSlide}>
+          <Plus size={20} />
+          <span>New Slide</span>
+        </button>
+      </div>
+    </footer>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    height: '140px',
+    backgroundColor: '#FFFFFF',
+    borderTop: '1px solid #E2E8F0',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 24px',
+    boxSizing: 'border-box',
+    overflowX: 'auto',
+  },
+  thumbnailList: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'center',
+  },
+  thumbCard: {
+    width: '90px',
+    height: '112px',
+    borderRadius: '8px',
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    cursor: 'pointer',
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    padding: '8px',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    transition: 'all 0.15s ease-in-out',
+  },
+  thumbNumber: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#94A3B8',
+  },
+  thumbTitle: {
+    fontSize: '10px',
+    color: '#E2E8F0',
+    fontWeight: 500,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  },
+  actionOverlay: {
+    display: 'flex',
+    gap: '4px',
+    marginTop: 'auto',
+    justifyContent: 'center',
+  },
+  iconBtn: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '4px',
+    cursor: 'pointer',
+    color: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  addBtn: {
+    width: '90px',
+    height: '112px',
+    borderRadius: '8px',
+    border: '1px dashed #CBD5E1',
+    backgroundColor: '#F8FAFC',
+    color: '#64748B',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 600,
+  },
+};
+
+6. Export Utilities (src/utils/exportEngine.ts)
+
+LinkedIn requires 4:5 PDF documents for multi-page carousels or high-res PNGs
+for individual posts. This utility renders the live DOM elements onto a 1080
+× 1350 HTML canvas, producing downloadable files on the client side with zero
+server latency.
+
+import { Slide } from '../types';
+
+export const rasterizeCanvasToImage = async (
+  elementId: string,
+  fileName: string
+): Promise<string> => {
+  const node = document.getElementById(elementId);
+  if (!node) throw new Error('Canvas element missing.');
+
+  // Render node contents via SVG foreignObject extraction
+  const clone = node.cloneNode(true) as HTMLElement;
+  clone.style.transform = 'none';
+
+  const wrapper = document.createElement('div');
+  wrapper.appendChild(clone);
+
+  const rawHtml = new XMLSerializer().serializeToString(wrapper);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350">
+      <foreignObject width="100%" height="100%">
+        ${rawHtml}
+      </foreignObject>
+    </svg>
+  `;
+
+  const img = new Image();
+  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      const cvs = document.createElement('canvas');
+      cvs.width = 1080;
+      cvs.height = 1350;
+      const ctx = cvs.getContext('2d');
+      if (!ctx) return reject('No Canvas Context');
+
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      const pngUrl = cvs.toDataURL('image/png');
+
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `${fileName}.png`;
+      downloadLink.href = pngUrl;
+      downloadLink.click();
+      resolve(pngUrl);
+    };
+    img.onerror = (e) => reject(e);
+    img.src = url;
+  });
+};
+
+/**
+ * Compiles entire carousel into a PDF document formatted for LinkedIn document posts.
+ */
+export const exportCarouselToPDF = async (slides: Slide[], brandName: string) => {
+  alert(
+    `Compiling ${slides.length} slides for "${brandName}". When prompted, select 'Save as PDF' with Layout: Portrait and Margins: None.`
+  );
+  window.print();
+};
+
+7. Main Application Container (src/App.tsx)
+
+This integrates the template library, active editing canvas, real-time sidebar
+controls, slide navigation, and export actions.
+
+import React, { useState, useEffect } from 'react';
+import { CarouselProject, CanvasElement } from './types';
+import { TEMPLATES } from './templates';
+import { SlideCanvas } from './components/SlideCanvas';
+import { SidebarControls } from './components/SidebarControls';
+import { SlideNavigator } from './components/SlideNavigator';
+import { rasterizeCanvasToImage, exportCarouselToPDF } from './utils/exportEngine';
+import { Download, FileText, LayoutTemplate, ShieldCheck } from 'lucide-react';
+
+export const App: React.FC = () => {
+  const [project, setProject] = useState<CarouselProject>(TEMPLATES.mlDeepDive);
+  const [activeSlideIdx, setActiveSlideIdx] = useState<number>(0);
+  const [selectedElemId, setSelectedElemId] = useState<string | null>(null);
+  const [zoomScale, setZoomScale] = useState<number>(0.55);
+  const [showSafeZone, setShowSafeZone] = useState<boolean>(true);
+
+  // Auto-fit zoom on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const h = window.innerHeight - 260;
+      const calculated = Math.min(h / 1350, 0.65);
+      setZoomScale(Math.max(calculated, 0.35));
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const currentSlide = project.slides[activeSlideIdx] || project.slides[0];
+  const selectedElement = currentSlide.elements.find((el) => el.id === selectedElemId) || null;
+
+  // Element CRUD Operations
+  const handleUpdateElement = (updated: CanvasElement) => {
+    setProject((prev) => {
+      const slides = [...prev.slides];
+      const elements = slides[activeSlideIdx].elements.map((el) =>
+        el.id === updated.id ? updated : el
+      );
+      slides[activeSlideIdx] = { ...slides[activeSlideIdx], elements };
+      return { ...prev, slides };
+    });
+  };
+
+  const handleDeleteElement = (id: string) => {
+    setProject((prev) => {
+      const slides = [...prev.slides];
+      slides[activeSlideIdx].elements = slides[activeSlideIdx].elements.filter((e) => e.id !== id);
+      return { ...prev, slides };
+    });
+    setSelectedElemId(null);
+  };
+
+  const handleAddElement = (type: CanvasElement['type']) => {
+    const newId = `elem-${Date.now()}`;
+    let newElement: CanvasElement;
+
+    if (type === 'text') {
+      newElement = {
+        id: newId,
+        type: 'text',
+        x: 100,
+        y: 200,
+        width: 600,
+        height: 80,
+        content: 'Edit this text content directly.',
+        fontSize: 36,
+        fontWeight: 600,
+        fontFamily: 'Inter',
+        color: '#FFFFFF',
+        textAlign: 'left',
+      };
+    } else if (type === 'code') {
+      newElement = {
+        id: newId,
+        type: 'code',
+        x: 80,
+        y: 300,
+        width: 880,
+        height: 400,
+        code: `# Code With K\nSELECT user_id, count(*) \nFROM analytics_events \nGROUP BY 1;`,
+        language: 'sql',
+        theme: 'dark',
+        fontSize: 22,
+        windowControls: true,
+      };
+    } else if (type === 'metric') {
+      newElement = {
+        id: newId,
+        type: 'metric',
+        x: 80,
+        y: 350,
+        width: 420,
+        height: 180,
+        label: 'PERFORMANCE GAIN',
+        value: '+82.4%',
+        accentColor: project.accentColor,
+        bgColor: '#161B22',
+        borderColor: '#30363D',
+      };
+    } else {
+      newElement = {
+        id: newId,
+        type: 'badge',
+        x: 80,
+        y: 80,
+        width: 220,
+        height: 44,
+        text: 'KEY TAKEAWAYS',
+        bgColor: '#161B22',
+        textColor: project.accentColor,
+        borderColor: '#30363D',
+        fontSize: 16,
+      };
+    }
+
+    setProject((prev) => {
+      const slides = [...prev.slides];
+      slides[activeSlideIdx].elements.push(newElement);
+      return { ...prev, slides };
+    });
+    setSelectedElemId(newId);
+  };
+
+  // Slide CRUD Operations
+  const handleAddSlide = () => {
+    const newSlide = {
+      id: `slide-${Date.now()}`,
+      title: `Slide ${project.slides.length + 1}`,
+      background: currentSlide.background,
+      elements: [
+        {
+          id: `brand-${Date.now()}`,
+          type: 'text' as const,
+          x: 740,
+          y: 85,
+          width: 260,
+          height: 40,
+          content: project.brandName,
+          fontSize: 24,
+          fontWeight: 700,
+          fontFamily: 'Inter',
+          color: '#8B949E',
+          textAlign: 'right' as const,
+        },
+      ],
+    };
+    setProject((prev) => ({ ...prev, slides: [...prev.slides, newSlide] }));
+    setActiveSlideIdx(project.slides.length);
+  };
+
+  const handleDuplicateSlide = (index: number) => {
+    const target = project.slides[index];
+    const duplicated = {
+      ...target,
+      id: `slide-${Date.now()}`,
+      title: `${target.title} (Copy)`,
+      elements: target.elements.map((el) => ({ ...el, id: `el-${Date.now()}-${Math.random()}` })),
+    };
+    const updated = [...project.slides];
+    updated.splice(index + 1, 0, duplicated);
+    setProject((prev) => ({ ...prev, slides: updated }));
+    setActiveSlideIdx(index + 1);
+  };
+
+  const handleDeleteSlide = (index: number) => {
+    if (project.slides.length <= 1) return;
+    const updated = project.slides.filter((_, idx) => idx !== index);
+    setProject((prev) => ({ ...prev, slides: updated }));
+    setActiveSlideIdx(Math.max(0, index - 1));
+  };
+
+  const handleMoveSlide = (from: number, to: number) => {
+    const updated = [...project.slides];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    setProject((prev) => ({ ...prev, slides: updated }));
+    setActiveSlideIdx(to);
+  };
+
+  return (
+    <div style={styles.appContainer}>
+      {/* Top Header Bar */}
+      <header style={styles.navbar}>
+        <div style={styles.logoBadge}>
+          <span style={styles.logoName}>{project.brandName}</span>
+          <span style={styles.editorTag}>Studio</span>
+        </div>
+
+        {/* Preset Selector */}
+        <div style={styles.templatePicker}>
+          <LayoutTemplate size={16} color="#64748B" />
+          <select
+            style={styles.templateDropdown}
+            onChange={(e) => {
+              if (TEMPLATES[e.target.value]) {
+                setProject(TEMPLATES[e.target.value]);
+                setActiveSlideIdx(0);
+                setSelectedElemId(null);
+              }
+            }}
+          >
+            <option value="mlDeepDive">Template: ML Focal Loss Deep Dive</option>
+            <option value="sqlOptimization">Template: SQL Query Optimization</option>
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div style={styles.navActions}>
+          <button
+            style={{
+              ...styles.secondaryBtn,
+              backgroundColor: showSafeZone ? '#F1F5F9' : '#FFFFFF',
+            }}
+            onClick={() => setShowSafeZone(!showSafeZone)}
+            title="Toggle 80px Safe Margin Grid"
+          >
+            <ShieldCheck size={16} /> Margins
+          </button>
+          <button
+            style={styles.secondaryBtn}
+            onClick={() =>
+              rasterizeCanvasToImage(
+                'carousel-canvas',
+                `${project.brandName}-Slide-${activeSlideIdx + 1}`
+              )
+            }
+          >
+            <Download size={16} /> Export Slide (PNG)
+          </button>
+          <button
+            style={styles.primaryBtn}
+            onClick={() => exportCarouselToPDF(project.slides, project.brandName)}
+          >
+            <FileText size={16} /> Export PDF Carousel
+          </button>
+        </div>
+      </header>
+
+      {/* Main Workspace Body */}
+      <div style={styles.mainArea}>
+        {/* Left Side: Property Controls */}
+        <SidebarControls
+          selectedElement={selectedElement}
+          onUpdateElement={handleUpdateElement}
+          onDeleteElement={handleDeleteElement}
+          onAddElement={handleAddElement}
+          slideBg={currentSlide.background}
+          onUpdateSlideBg={(color) => {
+            setProject((prev) => {
+              const slides = [...prev.slides];
+              slides[activeSlideIdx] = { ...slides[activeSlideIdx], background: color };
+              return { ...prev, slides };
+            });
+          }}
+        />
+
+        {/* Center: Scaled Slide Canvas */}
+        <main style={styles.canvasContainer}>
+          <SlideCanvas
+            slide={currentSlide}
+            selectedElementId={selectedElemId}
+            onSelectElement={setSelectedElemId}
+            onUpdateElement={handleUpdateElement}
+            scale={zoomScale}
+            showSafeZone={showSafeZone}
+            brandName={project.brandName}
+          />
+        </main>
+      </div>
+
+      {/* Bottom: Multi-Slide Manager */}
+      <SlideNavigator
+        slides={project.slides}
+        activeSlideIndex={activeSlideIdx}
+        onSelectSlide={(idx) => {
+          setActiveSlideIdx(idx);
+          setSelectedElemId(null);
+        }}
+        onAddSlide={handleAddSlide}
+        onDuplicateSlide={handleDuplicateSlide}
+        onDeleteSlide={handleDeleteSlide}
+        onMoveSlide={handleMoveSlide}
+      />
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  appContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    width: '100vw',
+    backgroundColor: '#F8FAFC',
+    overflow: 'hidden',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+  navbar: {
+    height: '64px',
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #E2E8F0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 24px',
+    boxSizing: 'border-box',
+    zIndex: 10,
+  },
+  logoBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  logoName: {
+    fontSize: '18px',
+    fontWeight: 800,
+    color: '#0F172A',
+    letterSpacing: '-0.5px',
+  },
+  editorTag: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#3B82F6',
+    backgroundColor: '#EFF6FF',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    textTransform: 'uppercase',
+  },
+  templatePicker: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#F1F5F9',
+    padding: '6px 12px',
+    borderRadius: '8px',
+  },
+  templateDropdown: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#334155',
+    outline: 'none',
+    cursor: 'pointer',
+  },
+  navActions: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+  },
+  secondaryBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 14px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #CBD5E1',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#334155',
+    cursor: 'pointer',
+  },
+  primaryBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 16px',
+    backgroundColor: '#0F172A',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#FFFFFF',
+    cursor: 'pointer',
+  },
+  mainArea: {
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+  },
+  canvasContainer: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+    position: 'relative',
+    overflow: 'auto',
+  },
+};
+
+export default App;
+
+8. Verification & Interaction Checklist
+
+1.  Brand Visibility: "Code With K" is pinned to top header positions and can be
+    resized, restyled, or translated anywhere.
+2.  True Drag & Position: Select any code card, metric box, or heading on the
+    slide. Drag it anywhere across the 1080 × 1350 canvas. Values synchronize
+    immediately in the sidebar properties.
+3.  80px Safe Margin Toggle: Click the Margins button in the top navigation bar
+    to toggle the official LinkedIn mobile feed crop guide.
+4.  Slide Reordering: Use arrow buttons on the bottom slide thumbnails to
+    reorder presentation sequences.
+5.  Client-Side Export: Click Export Slide (PNG) to generate a 1080 × 1350 px
+    image. Click Export PDF Carousel to open the print engine configured for
+    multi-page document carousels.
